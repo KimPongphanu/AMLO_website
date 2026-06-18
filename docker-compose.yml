@@ -1,0 +1,73 @@
+# ============================================================
+# Docker Compose - AMLO System (Frontend + Backend + PostgreSQL)
+# ============================================================
+name: amlo
+
+services:
+  # ── PostgreSQL Database ──
+  postgres:
+    image: postgres:16-alpine
+    container_name: amlo-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: backend_amlo
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - '5432:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U postgres']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend (Express + Prisma) ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: amlo-backend
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-12345}@postgres:5432/backend_amlo
+      JWT_SECRET: ${JWT_SECRET:-key_pass_of_amlo}
+      MASTER_KEY: ${MASTER_KEY:-your-master-key-for-supervisor-creation}
+      SMTP_HOST: ${SMTP_HOST:-smtp.ethereal.email}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      NODE_ENV: production
+      PORT: 8080
+    volumes:
+      - uploads:/app/uploads
+      - backups:/app/backups
+    ports:
+      - '8080:8080'
+      - '5555:5555'
+
+  # ── Frontend (Vite + Nginx) ──
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: amlo-frontend
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - '80:80'
+      - '443:443'
+
+# ── Persistent Volumes ──
+volumes:
+  postgres_data:
+    name: amlo_postgres_data
+  uploads:
+    name: amlo_uploads
+  backups:
+    name: amlo_backups
