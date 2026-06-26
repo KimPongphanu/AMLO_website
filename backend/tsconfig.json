@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "es2022",
+    "module": "commonjs",
+    "lib": ["es2022"],
+    "outDir": "./dist",
+    "rootDir": "./",
+    "ignoreDeprecations": "6.0",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": true,
+    "declarationMap": true,
+    "sourceMap": true,
+    "moduleResolution": "node"
+  },
+  "include": [
+    "server.ts",
+    "prisma.config.ts",
+    "prisma/**/*.ts",
+    "controllers/**/*.ts",
+    "lib/**/*.ts",
+    "middlewares/**/*.ts",
+    "routes/**/*.ts",
+    "services/**/*.ts",
+    "utils/**/*.ts"
+  ],
+  "exclude": ["node_modules", "dist", "backups", "uploads"]
+}

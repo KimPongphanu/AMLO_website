@@ -35,3 +35,8 @@ backend/backups/*
 
 # Test reports
 coverage/
+
+# Prisma
+backend/generated/
+*.xml
+*.txt

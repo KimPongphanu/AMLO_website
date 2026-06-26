@@ -1,0 +1,11 @@
+# .repomixignore
+*.css
+*.svg
+*.png
+*.jpg
+*.jpeg
+*.webp
+src/assets/
+src/App.css
+*.test.tsx
+*.test.ts

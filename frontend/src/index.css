@@ -1,0 +1,125 @@
+@import 'tailwindcss';
+
+/* ── Font Family (ตามมาตรฐานเว็บไซต์ภาครัฐ) ── */
+:root {
+  --font-base: 16px;
+  --font-scale: 1;
+  font-family:
+    'Sarabun', 'Noto Sans Thai', 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* ── Font Size Variants ── */
+html.font-small {
+  --font-scale: 0.875; /* 14px */
+}
+html.font-large {
+  --font-scale: 1.125; /* 18px */
+}
+
+/* ── WCAG AA Color Contrast Override ── */
+/* slate-400 (#94a3b8) → contrast 2.8:1 on white (FAIL WCAG AA) */
+/* override ให้เข้มขึ้นเป็น #64748b (slate-500) → contrast 4.6:1 ✅ */
+.text-slate-400 {
+  color: #64748b !important;
+}
+.border-slate-400 {
+  border-color: #64748b !important;
+}
+.bg-slate-400 {
+  background-color: #64748b !important;
+}
+
+/* ── Apply base font size ── */
+html {
+  font-size: calc(var(--font-base) * var(--font-scale));
+}
+
+/* ── Accessibility: Smooth scroll ── */
+html {
+  scroll-behavior: smooth;
+}
+
+.ql-rendered ul {
+  list-style-type: disc;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+.ql-rendered ol {
+  list-style-type: decimal;
+  padding-left: 1.75rem;
+  margin-bottom: 1rem;
+}
+.ql-rendered li {
+  margin-bottom: 0.35rem;
+}
+.ql-rendered li.ql-indent-1 {
+  padding-left: 2rem;
+}
+.ql-rendered li.ql-indent-2 {
+  padding-left: 4rem;
+}
+.ql-rendered h1 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 1.25rem 0 0.5rem;
+}
+.ql-rendered h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 1rem 0 0.5rem;
+}
+.ql-rendered h3 {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin: 0.75rem 0 0.4rem;
+}
+.ql-rendered p {
+  margin-bottom: 0.75rem;
+}
+.ql-rendered strong {
+  font-weight: 700;
+}
+.ql-rendered em {
+  font-style: italic;
+}
+.ql-rendered img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 10px;
+  margin: 1rem 0;
+  border: 1px solid #e2e8f0;
+}
+.ql-rendered a {
+  color: #2563eb;
+  text-decoration: underline;
+}
+.ql-rendered blockquote {
+  border-left: 4px solid #cbd5e1;
+  padding-left: 1rem;
+  color: #64748b;
+  margin: 1rem 0;
+  font-style: italic;
+}
+.ql-rendered table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+.ql-rendered table td,
+.ql-rendered table th {
+  border: 1px solid #cbd5e1;
+  padding: 8px 12px;
+  text-align: left;
+  vertical-align: top;
+}
+.ql-rendered table th {
+  background-color: #f8fafc;
+  font-weight: 600;
+  color: #1e293b;
+}
+.ql-rendered table tr:nth-child(even) {
+  background-color: #f8fafc;
+}

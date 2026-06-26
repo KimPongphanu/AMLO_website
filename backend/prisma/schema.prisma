@@ -1,0 +1,247 @@
+generator client {
+  provider   = "prisma-client-js"
+  engineType = "library"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 Int                  @id @default(autoincrement())
+  uuid               String               @unique @default(uuid())
+  email              String               @unique
+  password           String
+  firstname          String
+  lastname           String
+  role               Role                 @default(USER)
+  twoFactorMethod    TwoFactorMethod      @default(NONE)
+  twoFactorSecret    String?
+  twoFactorEnabled   Boolean              @default(false)
+  recentOnline       DateTime             @updatedAt
+  createdAt          DateTime             @default(now())
+  status             String               @default("Active")
+  forcePasswordReset Boolean              @default(false)
+  passwordChangedAt  DateTime?
+  auditLogs          AuditLog[]
+  failedAttempts     FailedLoginAttempt[]
+  passwordHistory    PasswordHistory[]
+  recoveryKeys       RecoveryKey[]
+  sessions           Session[]
+  requesterRequests  SupervisorRequest[] @relation("requester")
+  targetRequests     SupervisorRequest[] @relation("target")
+}
+
+model RecoveryKey {
+  id        String    @id @default(uuid())
+  userId    Int
+  keyHash   String
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+  expiresAt DateTime
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       Int
+  tokenHash    String   @unique
+  ipAddress    String
+  userAgent    String
+  lastActiveAt DateTime @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordHistory {
+  id           String   @id @default(uuid())
+  userId       Int
+  passwordHash String
+  createdAt    DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model JwtBlacklist {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    Int?
+  action    String
+  ipAddress String
+  serverIp  String   @default("")
+  region    String?
+  userAgent String
+  details   String?
+  createdAt DateTime @default(now())
+  user      User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([createdAt])
+  @@index([action])
+  @@index([userId, createdAt])
+}
+
+model FailedLoginAttempt {
+  id          String    @id @default(uuid())
+  email       String
+  ipAddress   String
+  attempts    Int       @default(1)
+  lastAttempt DateTime  @default(now())
+  lockedUntil DateTime?
+  userId      Int?
+  user        User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([email])
+}
+
+model Department {
+  id          Int           @id @default(autoincrement())
+  title       String
+  cover_image String
+  content     String?
+  isDelete    Boolean       @default(false)
+  GalleryItem GalleryItem[]
+}
+
+model GalleryItem {
+  id           Int         @id @default(autoincrement())
+  type         GalleryType
+  url          String
+  departmentId Int
+  Department   Department  @relation(fields: [departmentId], references: [id], onDelete: Cascade)
+}
+
+model News {
+  id          Int      @id @default(autoincrement())
+  type        NewsType
+  title       String
+  date        DateTime @default(now())
+  image_src   String
+  description String
+  content     String?
+  views       Int      @default(0)
+  isShow      Boolean  @default(true)
+
+  @@index([date])
+  @@index([type, date])
+}
+
+model comment_items {
+  id        String   @id @default(uuid())
+  star      Int
+  msg       String
+  isShow    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([createdAt])
+  @@index([isShow, createdAt])
+}
+
+model contact_requests {
+  id                String   @id @default(uuid())
+  first_name        String
+  last_name         String
+  email             String
+  tel_number        String
+  preferred_contact String
+  message           String
+  status            String   @default("ยังไม่ตอบกลับ")
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+}
+
+model email_otps {
+  id        String   @id @default(uuid())
+  email     String
+  otp       String
+  used      Boolean  @default(false)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([email])
+  @@index([email, used])
+}
+
+model slider_images {
+  id        Int      @id @default(autoincrement())
+  image_url String
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+
+  @@index([order])
+}
+
+model banners {
+  id        Int      @id @default(autoincrement())
+  image_url String
+  title     String   @default("")
+  link_url  String   @default("")
+  order     Int      @default(0)
+  isShow    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([order])
+  @@index([isShow, order])
+}
+
+model splash_popups {
+  id        Int      @id @default(autoincrement())
+  image_url String
+  title     String   @default("")
+  isActive  Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model site_settings {
+  id        Int      @id @default(autoincrement())
+  key       String   @unique
+  value     String   @default("")
+  updatedAt DateTime @updatedAt
+}
+
+model SupervisorRequest {
+  id          Int      @id @default(autoincrement())
+  actionType  String   // 'BAN' | 'DELETE' | 'FORCE_RESET'
+  reason      String
+  status      String   @default("PENDING") // PENDING | APPROVED | REJECTED | EXPIRED
+  
+  requesterId Int
+  requester   User     @relation("requester", fields: [requesterId], references: [id])
+  
+  targetId    Int
+  target      User     @relation("target", fields: [targetId], references: [id])
+  
+  createdAt   DateTime @default(now())
+  respondedAt DateTime?
+  expiresAt   DateTime
+
+  @@index([targetId, status])
+  @@index([requesterId, status])
+}
+
+enum Role {
+  USER
+  ADMIN
+  SUPERVISOR
+}
+
+enum TwoFactorMethod {
+  NONE
+  AUTHENTICATOR
+  EMAIL_OTP
+}
+
+enum GalleryType {
+  IMAGE
+  VIDEO
+}
+
+enum NewsType {
+  NEWS
+  PR
+}

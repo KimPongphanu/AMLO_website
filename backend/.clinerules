@@ -1,0 +1,1 @@
+NEVER execute 'npx tsc' or any build/validation commands in the terminal. Just edit the files directly.
