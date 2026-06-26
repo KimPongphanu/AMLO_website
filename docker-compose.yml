@@ -1,9 +1,26 @@
 # ============================================================
 # Docker Compose - AMLO System (Frontend + Backend + PostgreSQL)
 # ============================================================
+# ⚠️ IMPORTANT: Create a .env file with strong passwords before deploying!
+# See .env.example for required variables.
+# Without .env, defaults are UNSAFE placeholders — DO NOT USE IN PRODUCTION.
+# ============================================================
 name: amlo
 
 services:
+  # ── Redis Cache ──
+  redis:
+    image: redis:7-alpine
+    container_name: amlo-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
   # ── PostgreSQL Database ──
   postgres:
     image: postgres:16-alpine
@@ -12,7 +29,7 @@ services:
     environment:
       POSTGRES_DB: backend_amlo
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD_is_required_set_it_in_.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     ports:
@@ -33,10 +50,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-12345}@postgres:5432/backend_amlo
-      JWT_SECRET: ${JWT_SECRET:-key_pass_of_amlo}
-      MASTER_KEY: ${MASTER_KEY:-your-master-key-for-supervisor-creation}
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/backend_amlo
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET_is_required_generate_with_openssl_rand_-base64_48}
+      MASTER_KEY: ${MASTER_KEY:?MASTER_KEY_is_required}
       SMTP_HOST: ${SMTP_HOST:-smtp.ethereal.email}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
@@ -48,7 +67,6 @@ services:
       - backups:/app/backups
     ports:
       - '8080:8080'
-      - '5555:5555'
 
   # ── Frontend (Vite + Nginx) ──
   frontend:
@@ -71,3 +89,5 @@ volumes:
     name: amlo_uploads
   backups:
     name: amlo_backups
+  redis_data:
+    name: amlo_redis_data

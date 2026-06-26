@@ -1,6 +1,9 @@
 # ============================================================
 # Docker Compose — Production (Pull from Docker Hub)
 # ============================================================
+# ⚠️ IMPORTANT: Create a .env file with strong passwords before deploying!
+# See .env.example for required variables.
+# ============================================================
 name: amlo
 
 services:
@@ -12,7 +15,7 @@ services:
     environment:
       POSTGRES_DB: backend_amlo
       POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-12345}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD_is_required_set_it_in_.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -30,9 +33,9 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: postgresql://postgres:${DB_PASSWORD:-12345}@postgres:5432/backend_amlo
-      JWT_SECRET: ${JWT_SECRET:-key_pass_of_amlo}
-      MASTER_KEY: ${MASTER_KEY:-your-master-key-for-supervisor-creation}
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/backend_amlo
+      JWT_SECRET: ${JWT_SECRET:?JWT_SECRET_is_required_generate_with_openssl_rand_-base64_48}
+      MASTER_KEY: ${MASTER_KEY:?MASTER_KEY_is_required}
       SMTP_HOST: ${SMTP_HOST:-smtp.ethereal.email}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
