@@ -43,5 +43,9 @@ backend/generated/
 zap_report.html
 repomix-output.xml
 
+# Submodule env files (not needed for Docker)
+backend/.env.docker
+frontend/.env.development
+
 # Config files
 *.txt
