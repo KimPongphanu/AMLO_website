@@ -38,4 +38,10 @@ coverage/
 
 # Prisma
 backend/generated/
-*.xml
+
+# Reports
+zap_report.html
+repomix-output.xml
+
+# Config files
+*.txt
