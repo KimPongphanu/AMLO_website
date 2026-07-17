@@ -1,6 +1,6 @@
 [submodule "backend"]
 	path = backend
-	url = https://github.com/KimPongphanu/backend-amlo.git
+	url = https://github.com/KimPongphanu/server-side-amlo.git
 
 [submodule "frontend"]
 	path = frontend
