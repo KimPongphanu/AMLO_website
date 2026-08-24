@@ -56,6 +56,11 @@ services:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/backend_amlo
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET_is_required_generate_with_openssl_rand_-base64_48}
       MASTER_KEY: ${MASTER_KEY:?MASTER_KEY_is_required}
+      # Seed credentials (required by prisma/seed.ts — set in .env)
+      SEED_SUPERVISOR_EMAIL: ${SEED_SUPERVISOR_EMAIL:-}
+      SEED_SUPERVISOR_PASSWORD: ${SEED_SUPERVISOR_PASSWORD:-}
+      SEED_ADMIN_EMAIL: ${SEED_ADMIN_EMAIL:-}
+      SEED_ADMIN_PASSWORD: ${SEED_ADMIN_PASSWORD:-}
       SMTP_HOST: ${SMTP_HOST:-smtp.ethereal.email}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER}
@@ -80,6 +85,22 @@ services:
     ports:
       - '80:80'
       - '443:443'
+
+  #Prisma Studio
+  prisma-studio:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: amlo-prisma-studio
+    restart: unless-stopped
+    command: npx prisma studio --port 5555 --browser none
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/backend_amlo
+    ports:
+      - '5555:5555'
 
 # ── Persistent Volumes ──
 volumes:
