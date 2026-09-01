@@ -1,0 +1,164 @@
+╔════════════════════════════════════════════════════╗
+║            คู่มือติดตั้ง AMLO Website              ║
+╚════════════════════════════════════════════════════╝
+
+═══════════════════════════════════════════════════════
+ 1. ความต้องการพื้นฐาน (Prerequisites)
+═══════════════════════════════════════════════════════
+ - Git: https://git-scm.com/downloads
+ - Docker & Docker Compose: https://www.docker.com/products/docker-desktop
+ - Terminal: Command Prompt, PowerShell หรือ Git Bash
+
+═══════════════════════════════════════════════════════
+ 2. Clone โปรเจกต์
+═══════════════════════════════════════════════════════
+ คำสั่ง:
+   git clone --recurse-submodules https://github.com/KimPongphanu/AMLO_website.git
+   cd AMLO_website
+
+ อธิบาย:
+   --recurse-submodules จะดึง backend และ frontend มาให้ด้วย
+   (ถ้าใช้ git clone ธรรมดา จะได้ folder backend/frontend เปล่าๆ)
+
+  ถ้า clone ไปแล้วโดยไม่ใช้ --recurse-submodules ให้ใช้:
+   git submodule update --init --recursive
+
+═══════════════════════════════════════════════════════
+ 3. ตั้งค่า Environment Variables (.env)
+═══════════════════════════════════════════════════════
+ คำสั่ง:
+   cp .env.example .env
+
+ อธิบาย:
+   .env.example เป็นไฟล์ template ที่มีค่า development พร้อมใช้
+   .env คือไฟล์ที่ Docker Compose ใช้อ่านค่า (DB_PASSWORD, JWT_SECRET, ฯลฯ)
+   .env ถูก gitignore — จะไม่ถูก push ขึ้น GitHub
+
+  แก้ไขค่าใน .env ได้ตามต้องการ:
+   - DB_PASSWORD: รหัสผ่าน PostgreSQL
+   - JWT_SECRET: คีย์สำหรับ JWT Token
+   - MASTER_KEY: คีย์สำหรับสร้าง Supervisor
+   - SMTP_*: ค่า SMTP Server สำหรับส่งอีเมล
+
+═══════════════════════════════════════════════════════
+ 4. รันด้วย Docker (วิธีหลัก)
+═══════════════════════════════════════════════════════
+ คำสั่ง:
+   docker compose up -d
+
+ อธิบาย:
+   - docker compose: ใช้ไฟล์ docker-compose.yml ใน root
+   - up: เริ่ม container ทั้งหมด (postgres, redis, backend, frontend)
+   - -d: รันแบบ background (detached) — terminal กลับมาใช้ต่อได้
+
+ สิ่งที่เกิดขึ้นอัตโนมัติ:
+   1. PostgreSQL + Redis ถูกสร้างและเริ่มทำงาน
+   2. Backend Image ถูก build (node modules + Prisma generate + tsc build)
+   3. Frontend Image ถูก build (node modules + vite build)
+   4. ✅ Prisma Migration ถูก deploy อัตโนมัติ! (จาก CMD ใน Dockerfile)
+   5. Backend server เริ่มทำงานที่ port 8080
+   6. Nginx frontend เริ่มทำงานที่ port 80
+
+ ตรวจสอบสถานะ:
+   docker compose ps
+
+ ดู logs:
+   docker compose logs -f         (ดูทั้งหมด)
+   docker compose logs -f backend (ดูเฉพาะ backend)
+   (กด Ctrl+C เพื่อออกจาก logs)
+═══════════════════════════════════════════════════════
+ 5. Manual Migrate (ถ้าต้องการรันด้วยตัวเอง)
+═══════════════════════════════════════════════════════
+  ปกติ migration จะรัน AUTO ทุกครั้งที่ container เริ่มทำงาน
+  ตาม CMD ใน Dockerfile บรรทัดสุดท้าย:
+    CMD sh -c "npx prisma migrate deploy 2>/dev/null; node dist/server.js"
+
+  ถ้าต้องการรันด้วยตัวเอง (เช่น หลังจากแก้ Prisma schema):
+   docker compose exec backend npx prisma migrate deploy
+
+  อธิบาย:
+   - docker compose exec: รันคำสั่งภายใน container ที่กำลังทำงาน
+   - backend: ชื่อ service ใน docker-compose.yml
+   - npx prisma migrate deploy: รัน migration ที่ยังไม่ได้รัน (ปลอดภัย ไม่ลบข้อมูล)
+
+  คำสั่ง Prisma อื่นๆ:
+   - เช็คสถานะ migration:     docker compose exec backend npx prisma migrate status
+   - สร้าง migration ใหม่:     docker compose exec backend npx prisma migrate dev
+   - ดู/แก้ไขข้อมูลด้วย GUI:   docker compose exec backend npx prisma studio
+   - generate Prisma Client:   docker compose exec backend npx prisma generate
+
+═══════════════════════════════════════════════════════
+ 6. รัน Seed ข้อมูล
+═══════════════════════════════════════════════════════
+ คำสั่ง:
+   docker compose exec backend npm run seed
+
+ อธิบาย:
+   npm run seed = รันไฟล์ prisma/seed.ts (ด้วย tsx)
+   ใส่ข้อมูลเริ่มต้น เช่น:
+   - Admin user (username: admin, password: ตามใน seed)
+   - ข้อมูลเริ่มต้นอื่นๆ
+
+  ควรรอให้ container พร้อมก่อน (10-20 วินาทีหลัง docker compose up -d)
+  ถ้าเจอ error "Connection refused" แปลว่า backend ยังไม่พร้อม:
+   docker compose logs -f backend
+
+═══════════════════════════════════════════════════════
+ 7. การเข้าใช้งาน
+═══════════════════════════════════════════════════════
+ - Frontend:    http://localhost           (port 80)
+ - Backend API: http://localhost:8080      (port 8080)
+ - Database:    localhost:5432             (port 5432)
+   - username: postgres
+   - password: ตามค่า DB_PASSWORD ใน .env
+
+═══════════════════════════════════════════════════════
+ 8. คำสั่งที่เป็นประโยชน์ (Docker)
+═══════════════════════════════════════════════════════
+ - หยุด container:               docker compose down
+ - หยุด + ลบข้อมูล DB ทั้งหมด:    docker compose down -v
+   (⚠️ ระวัง: ข้อมูลใน Database หายหมด ต้อง seed ใหม่)
+ - Rebuild images ใหม่:          docker compose up -d --build
+ - เข้า Shell ใน container:      docker compose exec backend sh
+                                 docker compose exec frontend sh
+ - ดู logs แบบ real-time:        docker compose logs -f
+ - รีสตาร์ท service:             docker compose restart backend
+ - เช็ค resource ที่ใช้:         docker stats
+
+═══════════════════════════════════════════════════════
+ 9. การ Pull อัปเดท code ล่าสุด
+═══════════════════════════════════════════════════════
+ วิธีที่ 1 (แนะนำ):
+   git pull --recurse-submodules
+
+ วิธีที่ 2 (แยกคำสั่ง):
+   git pull
+   git submodule update --init --recursive
+
+ หลังจาก pull แล้ว rebuild container:
+   docker compose up -d --build
+
+═══════════════════════════════════════════════════════
+ หมายเหตุ
+═══════════════════════════════════════════════════════
+ - backend: submodule ของ server-side-amlo
+   https://github.com/KimPongphanu/server-side-amlo
+
+ - frontend: submodule ของ client-side-amlo
+   https://github.com/KimPongphanu/client-side-amlo
+
+ - การแก้ .gitignore, package.json, Dockerfile ต้อง commit
+   แยกกันในแต่ละ repo (backend-amlo / client-side-amlo)
+   แล้วค่อยอัปเดท pointer ใน root repo
+
+═══════════════════════════════════════════════════════
+ สรุปขั้นตอนติดตั้งครั้งแรก (คำสั่งลัด)
+═══════════════════════════════════════════════════════
+ git clone --recurse-submodules https://github.com/KimPongphanu/AMLO_website.git
+ cd AMLO_website
+ cp .env.example .env
+ docker compose up -d
+ (รอ 10-20 วินาที)
+ docker compose exec backend npm run seed
+
+ เสร็จ! เข้าใช้งาน http://localhost

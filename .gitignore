@@ -49,3 +49,4 @@ frontend/.env.development
 
 # Config files
 *.txt
+!คู่มือติดตั้ง.txt
