@@ -13,10 +13,12 @@ services:
     image: redis:7-alpine
     container_name: amlo-redis
     restart: unless-stopped
-    ports:
-      - '6379:6379'
+    # 🌟 Security: ไม่เปิด port ออกภายนอก (internal network เท่านั้น) + บังคับใช้รหัสผ่าน
+    command: ['redis-server', '--requirepass', '${REDIS_PASSWORD:?REDIS_PASSWORD_is_required_set_it_in_.env}']
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     healthcheck:
-      test: ['CMD', 'redis-cli', 'ping']
+      test: ['CMD-SHELL', 'redis-cli -a "$$REDIS_PASSWORD" ping | grep PONG']
       interval: 10s
       timeout: 3s
       retries: 5
@@ -32,8 +34,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD_is_required_set_it_in_.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    ports:
-      - '5432:5432'
+    # 🌟 Security: ไม่เปิด port 5432 ออกนอก — เข้าถึงได้เฉพาะ container ใน network เดียวกัน
     healthcheck:
       test: ['CMD-SHELL', 'pg_isready -U postgres']
       interval: 10s
@@ -71,7 +72,8 @@ services:
       - uploads:/app/uploads
       - backups:/app/backups
     ports:
-      - '8080:8080'
+      # 🌟 Security: bind localhost เท่านั้น — กันการยิง backend ตรงข้าม Nginx จากเครื่องอื่น
+      - '127.0.0.1:8080:8080'
 
   # ── Frontend (Vite + Nginx) ──
   frontend:
@@ -100,7 +102,8 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:${DB_PASSWORD}@postgres:5432/backend_amlo
     ports:
-      - '5555:5555'
+      # 🌟 Security: Prisma Studio ไม่มี auth — bind localhost เท่านั้น (เครื่องอื่นใน LAN เข้าไม่ได้)
+      - '127.0.0.1:5555:5555'
 
 # ── Persistent Volumes ──
 volumes:
