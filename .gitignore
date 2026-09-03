@@ -47,6 +47,8 @@ repomix-output.xml
 backend/.env.docker
 frontend/.env.development
 
+Reports/
+
 # Config files
 *.txt
 !คู่มือติดตั้ง.txt
