@@ -150,6 +150,15 @@
  - การแก้ .gitignore, package.json, Dockerfile ต้อง commit
    แยกกันในแต่ละ repo (backend-amlo / client-side-amlo)
    แล้วค่อยอัปเดท pointer ใน root repo
+⚠️ ข้อควรระวังสำคัญ:
+ - หลังจากแก้ไข commit ใน submodule (backend/frontend) ต้อง push ขึ้น GitHub ก่อน
+   แล้วค่อยอัปเดต pointer ใน root repo ดังนี้:
+     cd backend        # หรือ cd frontend
+     git add -A && git commit -m "..." && git push
+     cd ..
+     git add backend   # หรือ git add frontend
+     git commit -m "chore: update submodule pointer" && git push
+   การไม่ push submodule ก่อนจะทำให้คนอื่น clone --recurse-submodules ไม่ได้!
 
 ═══════════════════════════════════════════════════════
  สรุปขั้นตอนติดตั้งครั้งแรก (คำสั่งลัด)
