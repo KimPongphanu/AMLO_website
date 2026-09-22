@@ -139,6 +139,12 @@
  - รีสตาร์ท service:             docker compose restart backend
  - เช็ค resource ที่ใช้:         docker stats
 
+ - สแกนช่องโหว่เว็บ (ZAP baseline) — รันจาก root ของ repo (ต้องมี container frontend ทำงานอยู่):
+     docker run --rm -v "%cd%":/zap/wrk:rw ghcr.io/zaproxy/zaproxy:stable zap-baseline.py ^
+       -t http://host.docker.internal/ -c zap-rules.conf -J zap-report.json
+   หมายเหตุ: ไฟล์ zap-rules.conf (root) ระบุเหตุผลของทุกรายการที่ตั้งเป็น INFO/IGNORE ไว้แล้ว
+             ผลล่าสุด (22 ก.ย. 2026): FAIL 0 / WARN 0 / INFO 3 / IGNORE 1 / PASS 63
+
 ═══════════════════════════════════════════════════════
  9. การ Pull อัปเดท code ล่าสุด
 ═══════════════════════════════════════════════════════
