@@ -1,0 +1,64 @@
+# ============================================================
+# Docker Compose — DEV MODE (Hot Reload)
+# ============================================================
+# ใช้ร่วมกับ docker-compose.yml (ไฟล์หลัก) — แก้โค้ดในเครื่องแล้ว
+# container อัปเดตทันที ไม่ต้อง rebuild ใหม่ทุกครั้ง
+#
+# เริ่มใช้งาน:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend frontend
+#
+# กลับไโหมด production (build จริง):
+#   docker compose up -d --build backend frontend
+#
+# URL ตอน dev:
+#   Frontend (Vite HMR):   http://localhost         → เข้าได้เหมือนโหมด prod (map 80 → 5173)
+#                          http://localhost:5173    → เข้าตรงที่ Vite
+#   Backend  (nodemon+tsx): http://localhost:8080 → server restart อัตโนมัติเมื่อแก้โค้ด
+#
+# หมายเหตุ:
+#   - Docker Desktop bind mount ไม่ส่ง inotify events ทั้ง frontend/backend
+#     จึงใช้ polling ทั้งคู่: VITE_USE_POLLING (vite) + nodemon --legacy-watch (backend)
+#   - node_modules ใช้ named volume แยก (ไม่ปนกับ node_modules บน Windows)
+#   - รูปที่อัปโหลดเก็บใน named volume amlo_uploads (/app/uploads) ใช้ร่วมกับโหมด prod
+#     → โฟลเดอร์ ./backend/uploads บนเครื่อง host ไม่ได้ถูก mount เข้า container (ไม่ถูกเสิร์ฟ)
+#   - แก้ package.json แล้ว: restart container (npm install รันทุกครั้งที่ start)
+#   - แก้ prisma/schema.prisma แล้ว: docker compose restart backend (generate ตอน start)
+# ============================================================
+services:
+  # ── Backend: source mount + nodemon (legacy-watch) + tsx ──
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: builder # ใช้ stage builder (มี source + devDependencies + tsx)
+    command: sh -c "npm install --no-audit --no-fund && (npx prisma generate --config prisma.config.ts 2>/dev/null || npx prisma generate) && (npx prisma migrate deploy 2>/dev/null; true) && npm run dev:docker"
+    environment:
+      NODE_ENV: development # ข้ามการบังคับ JWT_SECRET แบบ production
+    volumes:
+      - ./backend:/app
+      - backend_node_modules:/app/node_modules
+
+  # ── Frontend: source mount + Vite HMR ──
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder # ใช้ stage builder (node) แทน stage nginx (ไม่มี node)
+    command: sh -c "npm install --no-audit --no-fund && npm run dev"
+    environment:
+      NODE_ENV: development
+      # ยิง API ตรงที่ backend (CORS allowlist มี localhost:5173 อยู่แล้ว)
+      VITE_API_URL: http://localhost:8080
+      # เปิด file watching แบบ polling (bind mount จาก Windows ไม่ส่ง inotify)
+      VITE_USE_POLLING: 'true'
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    ports: !override # รันเฉพาะ Vite — ไม่ map 443 (nginx ไม่ทำงานในโหมดนี้)
+      - '80:5173' # http://localhost → Vite (ใช้งานเหมือนโหมด prod แต่ยังได้ hot reload)
+      - '5173:5173'
+
+# node_modules แยกจากเครื่อง host (binary ของ Linux ≠ Windows)
+volumes:
+  backend_node_modules:
+  frontend_node_modules:

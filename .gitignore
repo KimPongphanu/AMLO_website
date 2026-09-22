@@ -43,6 +43,9 @@ backend/generated/
 zap_report.html
 repomix-output.xml
 
+# Design mockups
+design_404.html
+
 # Submodule env files (not needed for Docker)
 backend/.env.docker
 frontend/.env.development
