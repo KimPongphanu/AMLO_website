@@ -4,11 +4,16 @@
 # ใช้ร่วมกับ docker-compose.yml (ไฟล์หลัก) — แก้โค้ดในเครื่องแล้ว
 # container อัปเดตทันที ไม่ต้อง rebuild ใหม่ทุกครั้ง
 #
-# เริ่มใช้งาน:
-#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend frontend
+# เริ่มใช้งาน (ต้องมี --build เสมอ):
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --build backend frontend
 #
-# กลับไโหมด production (build จริง):
+# กลับไปโหมด production (build จริง):
 #   docker compose up -d --build backend frontend
+#
+# ⚠️ สลับโหมดต้องใส่ --build ทุกครั้ง
+#   ทั้ง 2 โหมดใช้ image tag เดียวกัน (amlo-frontend:latest / amlo-backend:latest)
+#   ถ้าไม่ใส่ --build ตอนสลับ จะได้ image ของอีกโหมดมาใช้ เช่น กลับมา dev แล้วได้ image prod
+#   (nginx ไม่มี node/npm) → container restart วนและขึ้น "sh: npm: not found"
 #
 # URL ตอน dev:
 #   Frontend (Vite HMR):   http://localhost         → เข้าได้เหมือนโหมด prod (map 80 → 5173)
