@@ -112,6 +112,15 @@
    - username: postgres
    - password: ตามค่า DB_PASSWORD ใน .env
 
+ โหมด dev (hot reload — แก้โค้ดแล้วไม่ต้อง rebuild):
+   คำสั่ง: docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d backend frontend
+   - Frontend: http://localhost          (map port 80 → Vite)
+   - Frontend: http://localhost:5173     (เข้าตรงที่ Vite)
+   - Backend:  http://localhost:8080     (nodemon + tsx restart อัตโนมัติ)
+   หมายเหตุ: โหมดนี้ไม่มี nginx — จึงไม่มี 443/CSP/rate limit ของ nginx
+             และรูปที่อัปโหลดเก็บใน named volume amlo_uploads (ใช้ร่วมกับโหมด prod)
+             โฟลเดอร์ backend/uploads บนเครื่อง host ไม่ได้ถูก mount เข้า container
+
 ═══════════════════════════════════════════════════════
  8. คำสั่งที่เป็นประโยชน์ (Docker)
 ═══════════════════════════════════════════════════════
