@@ -39,6 +39,9 @@
    - JWT_SECRET: คีย์สำหรับ JWT Token
    - MASTER_KEY: คีย์สำหรับสร้าง Supervisor
    - SMTP_*: ค่า SMTP Server สำหรับส่งอีเมล
+   - SITE_URL: (ไม่บังคับ) โดเมนจริงของเว็บ เช่น https://www.amlo.go.th
+               ใช้สร้าง absolute URL ใน /sitemap.xml
+               ถ้าเว้นว่าง ระบบจะใช้ Host ของ request
 
 ═══════════════════════════════════════════════════════
  4. รันด้วย Docker (วิธีหลัก)
@@ -157,6 +160,43 @@
 
  หลังจาก pull แล้ว rebuild container:
    docker compose up -d --build
+
+═══════════════════════════════════════════════════════
+ 10. อัปเดทล่าสุด (9 พ.ย. 2569)
+═══════════════════════════════════════════════════════
+ สรุปสิ่งที่เปลี่ยน:
+  - Admin ใช้ 2FA flow เดียวกับ Supervisor
+    (บังคับตั้งค่าครั้งถัดไปที่ login, มี Recovery Keys)
+  - Admin จัดการ Footer / Popup เปิดหน้า / ประวัติ ได้
+  - Popup เปิดหน้า: แก้ไขรูปภาพได้ (crop 4:5 + เปลี่ยนรูป)
+  - เพิ่ม migration bg_color สำหรับตาราง splash_popups
+  - Footer Manager: เพิ่มช่องลิงก์
+    bookguide_url / open_data_url / rss_url
+  - เพิ่มหน้า /sitemap (HTML) และ /sitemap.xml (backend + Nginx)
+  - เพิ่ม robots.txt + <link rel="sitemap"> ใน index.html
+  - ลบหน้า /bookguide เดิม (editor demo)
+
+ สิ่งที่ต้องทำหลัง pull:
+  1. Backup DB ก่อน เช่น
+     docker compose exec -T postgres pg_dump -U postgres backend_amlo > backup_before_update.sql
+  2. Rebuild backend + frontend
+     docker compose up -d --build backend frontend
+     (backend จะรัน npx prisma migrate deploy อัตโนมัติจาก CMD)
+  3. ตรวจสถานะ migration (ถ้าต้องการ)
+     docker compose exec backend npx prisma migrate status
+     - ถ้าต้องการรัน manual: docker compose exec backend npx prisma migrate deploy
+  4. ตั้ง SITE_URL ใน .env (ถ้าต้องการ canonical domain)
+  5. แก้โดเมนใน frontend/public/robots.txt ถ้า production ไม่ใช่ www.amlo.go.th
+  6. ทดสอบ:
+     - /sitemap
+     - /sitemap.xml
+     - /robots.txt
+
+ ข้อควรระวัง:
+  - Admin ที่ยังไม่เปิด 2FA จะถูกพาไป /2fa-setup หลัง login
+  - ต้องบันทึก Recovery Keys ไว้ให้ดี
+  - ถ้า deploy frontend บน Vercel ต้องเพิ่ม rewrite/proxy /sitemap.xml เอง
+  - รายละเอียดทั้งหมดดูที่ docs/2026-11-09-update.md
 
 ═══════════════════════════════════════════════════════
  หมายเหตุ

@@ -47,6 +47,14 @@ services:
       SMTP_PASS: ${SMTP_PASS}
       NODE_ENV: production
       PORT: 8080
+      # Public site URL for absolute links in /sitemap.xml (empty = derive from request host)
+      SITE_URL: ${SITE_URL:-}
+      # ── Google Analytics 4 Data API (แสดงตัวเลขผู้เข้าชมบน Footer) ──
+      # เว้นว่างทั้งหมด = ยังไม่เปิดใช้ → Footer ใช้ค่า visitor_count ที่กรอกใน Dashboard
+      GA_PROPERTY_ID: ${GA_PROPERTY_ID:-}
+      GA_CLIENT_EMAIL: ${GA_CLIENT_EMAIL:-}
+      GA_PRIVATE_KEY: ${GA_PRIVATE_KEY:-}
+      GA_RANGE_DAYS: ${GA_RANGE_DAYS:-30}
     volumes:
       - uploads:/app/uploads
       - backups:/app/backups
