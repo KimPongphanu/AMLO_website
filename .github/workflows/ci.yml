@@ -195,6 +195,10 @@ jobs:
           API_RATE_LIMIT_MAX=20000
           LOGIN_RATE_LIMIT_MAX=500
           VERIFY_RATE_LIMIT_MAX=500
+          SEED_SUPERVISOR_EMAIL=supervisor@amlo.go.th
+          SEED_SUPERVISOR_PASSWORD=Supervisor123!
+          SEED_ADMIN_EMAIL=admin@amlo.go.th
+          SEED_ADMIN_PASSWORD=Admin123!
           EOF
           docker compose up -d --build backend postgres redis
           echo "รอ backend พร้อม..."
@@ -210,7 +214,16 @@ jobs:
         working-directory: .
         run: docker compose exec -T backend npm run seed || true
 
+      # E2E fixture: เปิด 2FA ด้วย secret คงที่ + ปิด bootstrap flag เพื่อให้ login ถึง dashboard
+      - name: Prepare E2E fixtures
+        working-directory: .
+        run: |
+          docker compose exec -T postgres psql -U postgres -d backend_amlo -c 'UPDATE "User" SET "forcePasswordReset" = false;'
+          docker compose exec -T postgres psql -U postgres -d backend_amlo -c 'UPDATE "User" SET "twoFactorEnabled" = true, "twoFactorMethod" = '\''AUTHENTICATOR'\'', "twoFactorSecret" = '\''JBSWY3DPEHPK3PXP'\'';'
+
       - name: Start Vite dev server
+        env:
+          VITE_API_URL: http://localhost:8080
         run: |
           npm run dev > /tmp/vite.log 2>&1 &
           echo "รอ Vite พร้อม..."
@@ -226,12 +239,14 @@ jobs:
         run: npx playwright test --config=e2e/playwright.config.ts
         env:
           E2E_BASE_URL: http://localhost:5173
-          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
-          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
-          E2E_ADMIN_TOTP_SECRET: ${{ secrets.E2E_ADMIN_TOTP_SECRET }}
-          E2E_SUPERVISOR_EMAIL: ${{ secrets.E2E_SUPERVISOR_EMAIL }}
-          E2E_SUPERVISOR_PASSWORD: ${{ secrets.E2E_SUPERVISOR_PASSWORD }}
-          E2E_SUPERVISOR_TOTP_SECRET: ${{ secrets.E2E_SUPERVISOR_TOTP_SECRET }}
+          E2E_ADMIN_EMAIL: admin@amlo.go.th
+          E2E_ADMIN_PASSWORD: Admin123!
+          E2E_ADMIN_TOTP_SECRET: JBSWY3DPEHPK3PXP
+          E2E_SUPERVISOR_EMAIL: supervisor@amlo.go.th
+          E2E_SUPERVISOR_PASSWORD: Supervisor123!
+          E2E_SUPERVISOR_TOTP_SECRET: JBSWY3DPEHPK3PXP
+          E2E_RESET_SESSIONS: 'true'
+          E2E_DB_CONTAINER: amlo-db
           E2E_HEALTH_URL: http://127.0.0.1:8080/health
 
       - name: Upload Playwright report
