@@ -54,6 +54,8 @@ services:
       NODE_ENV: development
       # ยิง API ตรงที่ backend (CORS allowlist มี localhost:5173 อยู่แล้ว)
       VITE_API_URL: http://localhost:8080
+      # proxy /sitemap.xml ไป backend ภายใน Docker network
+      VITE_SITEMAP_PROXY_TARGET: http://backend:8080
       # เปิด file watching แบบ polling (bind mount จาก Windows ไม่ส่ง inotify)
       VITE_USE_POLLING: 'true'
     volumes:
